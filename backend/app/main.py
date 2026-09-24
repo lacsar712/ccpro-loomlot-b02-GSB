@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from app.routers import (
     auth,
     dye_houses,
+    fiber_catalog,
     vats,
     dye_lots,
     fastness_checks,
@@ -37,6 +38,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 app.include_router(auth.router)
 app.include_router(dye_houses.router)
+app.include_router(fiber_catalog.router)
 app.include_router(vats.router)
 app.include_router(dye_lots.router)
 app.include_router(fastness_checks.router)

@@ -48,25 +48,36 @@ docker compose down
 ## 业务实体
 
 1. **DyeHouse** — `name`, `waterNote`, `notes`
-2. **Vat** — `dyeHouseId`, `vatCode`, `fiberType`, `capacityL`, `status` ∈ `ready|dyeing|drain`
-3. **DyeLot** — `vatId`, `recipeName`, `fabricKg`, `startedAt`, `operatorName`
-4. **FastnessCheck** — `dyeLotId`, `checkedAt`, `washFastness`(1–5), `rubFastness`(>0), `tempC`, `notes`
+2. **FiberCatalog** — `fiberName`（去空白唯一）, `enabled`, `maxCapacityL`（缸容上限，升，必须为正）
+3. **Vat** — `dyeHouseId`, `vatCode`, `fiberType`, `capacityL`, `status` ∈ `ready|dyeing|drain`
+4. **DyeLot** — `vatId`, `recipeName`, `fabricKg`, `startedAt`, `operatorName`
+5. **FastnessCheck** — `dyeLotId`, `checkedAt`, `washFastness`(1–5), `rubFastness`(>0), `tempC`, `notes`
+
+### 纤维名录与缸容上限
+
+- **缸容上限（`maxCapacityL`）含义**：该纤维全场允许的最大缸容升数。建缸或改缸时，`capacityL` 不得大于所选用纤维的名录上限，否则 400。
+- 染缸 `fiberType` 必须落在名录**启用**项内（新建与更新共用同一校验，后端强制，非仅前端下拉约束）。
+- 名录项**停用**后不可再选入新缸或改缸；已存在的旧缸仍显示原纤维名。
+- 名录仅染坊主管（`admin`）可维护（增改删、启停用）；操作员（`dyer`）建缸受名录约束，可只读查看名录。
+- 总览看板「启用纤维名录」条数 = 名录列表中启用行数，两侧同源对账。
 
 ### 规则
 
 - 仅当染缸状态为 `ready` 或 `dyeing` 时可新建染程，否则 409
 - 新建染程后，染缸状态自动设为 `dyeing`
 - 可选接口：`POST /api/vats/{id}/drain` 将染缸置为 `drain`
+- 建缸/改缸：纤维名须为名录启用项且缸容 ≤ 名录上限，否则 400
 
 ## 主要 API
 
 - `POST /api/auth/login`（OAuth2 表单）
 - `GET /api/auth/me`
 - `GET/POST/PUT/DELETE /api/dye-houses`
-- `GET/POST/PUT/DELETE /api/vats` · `POST /api/vats/{id}/drain`
+- `GET /api/fiber-catalog`（可 `?enabled=true` 过滤）· `POST/PUT/DELETE /api/fiber-catalog`（仅主管）
+- `GET/POST/PUT/DELETE /api/vats`（列表可 `?dyeHouseId=` `?fiberType=` 过滤）· `POST /api/vats/{id}/drain`
 - `GET/POST/PUT/DELETE /api/dye-lots`
 - `GET/POST/PUT/DELETE /api/fastness-checks`
-- `GET /api/dashboard/stats`
+- `GET /api/dashboard/stats`（含 `fiberEnabledCount` 启用名录条数）
 
 除登录外需 `Authorization: Bearer <token>`。字段对外为 camelCase。
 

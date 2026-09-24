@@ -5,6 +5,7 @@ from app.database import SessionLocal
 from app.models.dye_house import DyeHouse
 from app.models.dye_lot import DyeLot
 from app.models.fastness_check import FastnessCheck
+from app.models.fiber_catalog import FiberCatalog
 from app.models.user import User
 from app.models.vat import Vat
 
@@ -27,6 +28,18 @@ def seed() -> None:
                         role="dyer",
                         display_name="染程操作员",
                     ),
+                ]
+            )
+            db.commit()
+
+        if db.query(FiberCatalog).count() == 0:
+            # 名录：启用项覆盖现有染缸纤维与缸容；混纺停用，演示停用后不可再选入新缸
+            db.add_all(
+                [
+                    FiberCatalog(fiber_name="棉", enabled=True, max_capacity_l=1000.0),
+                    FiberCatalog(fiber_name="麻", enabled=True, max_capacity_l=800.0),
+                    FiberCatalog(fiber_name="丝", enabled=True, max_capacity_l=500.0),
+                    FiberCatalog(fiber_name="混纺", enabled=False, max_capacity_l=600.0),
                 ]
             )
             db.commit()

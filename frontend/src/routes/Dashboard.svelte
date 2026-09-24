@@ -44,6 +44,10 @@
       <div class="n">{stats.checksLast24h}</div>
       <div class="l">近 24 时抽检</div>
     </div>
+    <div class="stat">
+      <div class="n">{stats.fiberEnabledCount}</div>
+      <div class="l">启用纤维名录</div>
+    </div>
   </div>
 {/if}
 
@@ -56,5 +60,6 @@
     <a class="btn ghost" href="/vats" use:link>管理染缸</a>
     <a class="btn ghost" href="/lots" use:link>登记染程</a>
     <a class="btn ghost" href="/checks" use:link>色牢度抽检</a>
+    <a class="btn ghost" href="/fibers" use:link>纤维名录</a>
   </div>
 </div>

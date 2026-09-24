@@ -33,6 +33,8 @@
     <div class="who">
       <a href="/" use:link class="dash-link" class:on={$location === '/'}>总览</a>
       <span class="sep">·</span>
+      <a href="/fibers" use:link class="dash-link" class:on={$location.startsWith('/fibers')}>纤维名录</a>
+      <span class="sep">·</span>
       <span>{$user?.displayName || $user?.username || ''}</span>
       <button class="btn ghost small" type="button" on:click={logout}>退出</button>
     </div>

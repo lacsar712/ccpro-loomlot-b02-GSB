@@ -4,21 +4,35 @@
 
   let houses = [];
   let rows = [];
+  let catalog = [];
+  let fiberFilter = '';
   let error = '';
   let form = {
     dyeHouseId: '',
     vatCode: '',
-    fiberType: '棉',
+    fiberType: '',
     capacityL: 500,
     status: 'ready',
   };
   let editing = null;
 
+  $: enabledFibers = catalog.filter((f) => f.enabled);
+  $: selectedFiber = enabledFibers.find((f) => f.fiberName === form.fiberType);
+  $: fiberOptions = [...new Set([...catalog.map((f) => f.fiberName), ...rows.map((r) => r.fiberType)])];
+
   async function load() {
     error = '';
     try {
-      [houses, rows] = await Promise.all([api('/dye-houses'), api('/vats')]);
+      const vatPath = fiberFilter ? `/vats?fiberType=${encodeURIComponent(fiberFilter)}` : '/vats';
+      [houses, catalog, rows] = await Promise.all([
+        api('/dye-houses'),
+        api('/fiber-catalog'),
+        api(vatPath),
+      ]);
       if (!form.dyeHouseId && houses.length) form.dyeHouseId = String(houses[0].id);
+      if (!editing && !enabledFibers.some((f) => f.fiberName === form.fiberType)) {
+        form.fiberType = enabledFibers[0]?.fiberName || '';
+      }
     } catch (e) {
       error = e.message;
     }
@@ -49,7 +63,7 @@
       form = {
         dyeHouseId: form.dyeHouseId,
         vatCode: '',
-        fiberType: '棉',
+        fiberType: enabledFibers[0]?.fiberName || '',
         capacityL: 500,
         status: 'ready',
       };
@@ -93,7 +107,7 @@
 </script>
 
 <h1 class="page-title">染缸</h1>
-<p class="page-sub">状态：就绪 / 染色中 / 排液。容量单位为升。</p>
+<p class="page-sub">状态：就绪 / 染色中 / 排液。容量单位为升；纤维仅可选用名录启用项，缸容不得超过该纤维名录上限。</p>
 
 <div class="panel" style="margin-bottom:1rem;">
   <div class="form-grid">
@@ -106,8 +120,21 @@
       </select>
     </label>
     <label>缸号 <input bind:value={form.vatCode} /></label>
-    <label>纤维类型 <input bind:value={form.fiberType} /></label>
-    <label>容量 (L) <input type="number" step="0.1" bind:value={form.capacityL} /></label>
+    <label
+      >纤维类型
+      <select bind:value={form.fiberType}>
+        {#each enabledFibers as f}
+          <option value={f.fiberName}>{f.fiberName}</option>
+        {/each}
+        {#if editing && form.fiberType && !enabledFibers.some((f) => f.fiberName === form.fiberType)}
+          <option value={form.fiberType}>{form.fiberType}（已停用，保存需改用启用项）</option>
+        {/if}
+      </select>
+    </label>
+    <label
+      >容量 (L){selectedFiber ? ` · 上限 ${selectedFiber.maxCapacityL}` : ''}
+      <input type="number" step="0.1" bind:value={form.capacityL} />
+    </label>
     <label
       >状态
       <select bind:value={form.status}>
@@ -133,6 +160,23 @@
 </div>
 
 <div class="panel">
+  <div class="toolbar">
+    <label style="flex-direction:row;align-items:center;gap:0.5rem;">
+      纤维过滤
+      <select
+        bind:value={fiberFilter}
+        on:change={() => {
+          editing = null;
+          load();
+        }}
+      >
+        <option value="">全部</option>
+        {#each fiberOptions as name}
+          <option value={name}>{name}</option>
+        {/each}
+      </select>
+    </label>
+  </div>
   <table>
     <thead>
       <tr>
