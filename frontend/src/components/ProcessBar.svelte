@@ -5,6 +5,7 @@
 
   export let steps = [
     { path: '/houses', label: '染坊', hint: '水源与坊务' },
+    { path: '/fibers', label: '纤维名录', hint: '启用项与缸容上限' },
     { path: '/vats', label: '染缸', hint: '纤维与容量' },
     { path: '/lots', label: '染程', hint: '配方开缸' },
     { path: '/checks', label: '色牢度', hint: '抽检回写' },

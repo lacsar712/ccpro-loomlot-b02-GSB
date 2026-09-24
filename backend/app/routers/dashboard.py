@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.auth import get_current_user
 from app.database import get_db
 from app.models.dye_house import DyeHouse
+from app.models.fiber_catalog import FiberCatalog
 from app.models.dye_lot import DyeLot
 from app.models.fastness_check import FastnessCheck
 from app.models.user import User
@@ -24,6 +25,12 @@ def get_stats(
     now = datetime.now(timezone.utc)
     return DashboardStats(
         dye_house_total=db.query(func.count(DyeHouse.id)).scalar() or 0,
+        fiber_active_count=(
+            db.query(func.count(FiberCatalog.id))
+            .filter(FiberCatalog.is_active.is_(True))
+            .scalar()
+            or 0
+        ),
         vat_ready_count=db.query(func.count(Vat.id)).filter(Vat.status == "ready").scalar() or 0,
         vat_dyeing_count=db.query(func.count(Vat.id)).filter(Vat.status == "dyeing").scalar() or 0,
         lots_last_7d=(

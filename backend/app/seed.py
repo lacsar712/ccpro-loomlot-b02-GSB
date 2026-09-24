@@ -5,6 +5,7 @@ from app.database import SessionLocal
 from app.models.dye_house import DyeHouse
 from app.models.dye_lot import DyeLot
 from app.models.fastness_check import FastnessCheck
+from app.models.fiber_catalog import FiberCatalog
 from app.models.user import User
 from app.models.vat import Vat
 
@@ -27,6 +28,20 @@ def seed() -> None:
                         role="dyer",
                         display_name="染程操作员",
                     ),
+                ]
+            )
+            db.commit()
+
+        # 纤维名录独立播种：升级库（已有染坊）也能补齐名录，否则建缸会全部被拦
+        # capacity_limit_l 为该纤维允许的单缸最大容量（升）
+        # 混纺置为停用，演示“停用后不可新建/改缸，但旧缸仍显示原名”
+        if db.query(FiberCatalog).count() == 0:
+            db.add_all(
+                [
+                    FiberCatalog(name="棉", is_active=True, capacity_limit_l=1000.0),
+                    FiberCatalog(name="麻", is_active=True, capacity_limit_l=800.0),
+                    FiberCatalog(name="丝", is_active=True, capacity_limit_l=500.0),
+                    FiberCatalog(name="混纺", is_active=False, capacity_limit_l=600.0),
                 ]
             )
             db.commit()

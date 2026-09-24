@@ -28,6 +28,10 @@
       <div class="n">{stats.dyeHouseTotal}</div>
       <div class="l">染坊</div>
     </div>
+    <a class="stat stat-link" href="/fibers" use:link>
+      <div class="n">{stats.fiberActiveCount}</div>
+      <div class="l">启用纤维名录</div>
+    </a>
     <div class="stat">
       <div class="n">{stats.vatReadyCount}</div>
       <div class="l">就绪染缸</div>
@@ -53,8 +57,20 @@
   </p>
   <div class="toolbar">
     <a class="btn" href="/houses" use:link>进入染坊</a>
+    <a class="btn ghost" href="/fibers" use:link>纤维名录</a>
     <a class="btn ghost" href="/vats" use:link>管理染缸</a>
     <a class="btn ghost" href="/lots" use:link>登记染程</a>
     <a class="btn ghost" href="/checks" use:link>色牢度抽检</a>
   </div>
 </div>
+
+<style>
+  .stat-link {
+    transition: filter 0.15s ease, border-color 0.15s ease;
+  }
+
+  .stat-link:hover {
+    filter: brightness(1.12);
+    border-color: var(--indigo-bright);
+  }
+</style>

@@ -34,6 +34,17 @@ def create_access_token(subject: str, expires_delta: Optional[timedelta] = None)
     )
 
 
+def require_role(*roles: str):
+    """依赖工厂：仅允许给定角色（如 admin 主管）访问，否则 403。"""
+
+    def checker(current_user: User = Depends(get_current_user)) -> User:
+        if current_user.role not in roles:
+            raise HTTPException(status_code=403, detail="权限不足，仅主管可维护纤维名录")
+        return current_user
+
+    return checker
+
+
 def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db),

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.auth import get_current_user
 from app.database import get_db
 from app.models.dye_house import DyeHouse
+from app.models.fiber_catalog import FiberCatalog
 from app.models.user import User
 from app.models.vat import Vat
 from app.schemas.vat import VatCreate, VatUpdate, VatOut
@@ -14,15 +15,37 @@ from app.schemas.vat import VatCreate, VatUpdate, VatOut
 router = APIRouter(prefix="/api/vats", tags=["vats"])
 
 
+def validate_fiber_capacity(
+    db: Session, fiber_type: str, capacity_l: float
+) -> FiberCatalog:
+    """名录校验（新建与更新共用）：纤维必须为启用项，容量不得超过名录上限。"""
+    fiber = (
+        db.query(FiberCatalog)
+        .filter(FiberCatalog.name == fiber_type, FiberCatalog.is_active.is_(True))
+        .first()
+    )
+    if not fiber:
+        raise HTTPException(status_code=400, detail="纤维不在启用名录中，无法选用")
+    if capacity_l > fiber.capacity_limit_l:
+        raise HTTPException(
+            status_code=400,
+            detail=f"缸容 {capacity_l:g}L 超过该纤维名录上限 {fiber.capacity_limit_l:g}L",
+        )
+    return fiber
+
+
 @router.get("", response_model=List[VatOut])
 def list_vats(
     dye_house_id: Optional[int] = Query(None, alias="dyeHouseId"),
+    fiber_type: Optional[str] = Query(None, alias="fiberType"),
     db: Session = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
     q = db.query(Vat)
     if dye_house_id is not None:
         q = q.filter(Vat.dye_house_id == dye_house_id)
+    if fiber_type is not None:
+        q = q.filter(Vat.fiber_type == fiber_type)
     return q.order_by(Vat.id).all()
 
 
@@ -35,6 +58,7 @@ def create_vat(
     house = db.query(DyeHouse).filter(DyeHouse.id == payload.dye_house_id).first()
     if not house:
         raise HTTPException(status_code=400, detail="染坊不存在")
+    validate_fiber_capacity(db, payload.fiber_type, payload.capacity_l)
     item = Vat(
         dye_house_id=payload.dye_house_id,
         vat_code=payload.vat_code,
@@ -79,6 +103,10 @@ def update_vat(
         house = db.query(DyeHouse).filter(DyeHouse.id == data["dye_house_id"]).first()
         if not house:
             raise HTTPException(status_code=400, detail="染坊不存在")
+    # 名录校验与新建共用：未提供的字段沿用现值
+    effective_fiber = data.get("fiber_type", item.fiber_type)
+    effective_capacity = data.get("capacity_l", item.capacity_l)
+    validate_fiber_capacity(db, effective_fiber, effective_capacity)
     for k, v in data.items():
         setattr(item, k, v)
     try:
